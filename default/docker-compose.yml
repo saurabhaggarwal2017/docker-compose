@@ -1,6 +1,6 @@
 services:
   configserver:
-    image: "saurabh36/configserver:v3"
+    image: "saurabh36/configserver:v4"
     container_name: configserver-ms
     ports:
       - "8071:8071"
@@ -15,7 +15,7 @@ services:
       service: microservice-base-config
 
   eurekaserver:
-    image: "saurabh36/eurekaserver:v3"
+    image: "saurabh36/eurekaserver:v4"
     container_name: eurekaserver-ms
     ports:
       - "8070:8070"
@@ -50,10 +50,16 @@ services:
       service: microservice-base-config
 
   accounts:
-    image: "saurabh36/accounts:v3"
+    image: "saurabh36/accounts:v4"
     container_name: accounts-ms
     ports:
       - "8080:8080"
+    healthcheck:
+      test: "curl --fail --silent localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     depends_on:
       mysql:
         condition: service_healthy
@@ -65,10 +71,16 @@ services:
       service: microservice-eureka-config
 
   loans:
-    image: "saurabh36/loans:v3"
+    image: "saurabh36/loans:v4"
     container_name: loans-ms
     ports:
       - "8090:8090"
+    healthcheck:
+      test: "curl --fail --silent localhost:8090/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     depends_on:
       mysql:
         condition: service_healthy
@@ -80,10 +92,16 @@ services:
       service: microservice-eureka-config
 
   cards:
-    image: "saurabh36/cards:v3"
+    image: "saurabh36/cards:v4"
     container_name: cards-ms
     ports:
       - "9000:9000"
+    healthcheck:
+      test: "curl --fail --silent localhost:9000/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     depends_on:
       mysql:
         condition: service_healthy
@@ -94,6 +112,29 @@ services:
       file: common-config.yml
       service: microservice-eureka-config
 
+  gatewayserver:
+    image: "saurabh36/gatewayserver:v4"
+    container_name: gatewayserver-ms
+    ports:
+      - "8072:8072"
+    healthcheck:
+      test: "curl --fail --silent localhost:8072/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    depends_on:
+      accounts:
+        condition: service_healthy
+      cards:
+        condition: service_healthy
+      loans:
+        condition: service_healthy
+    extends:
+      file: common-config.yml
+      service: microservice-eureka-config
+    environment:
+      SPRING_APPLICATION_NAME: "gatewayserver"
 networks:
   eazybank:
     driver: "bridge"
